@@ -2,9 +2,9 @@
 
 import { useEffect, useRef } from "react";
 
-import { cn } from "@/lib/Utils";
+import { cn } from "@/utils/utils";
 
-import { createPortScene } from "./CreatePortScene";
+import { createPortScene } from "./createPortScene";
 
 export function PortScene({ className }: { className?: string }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);

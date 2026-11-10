@@ -1,57 +1,48 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { LuUserPlus } from "react-icons/lu";
-
-import { ItajobsEmblem, ItajobsWordmark } from "@/components/brand/ItajobsLogo";
+import { LuHash } from "react-icons/lu";
+import { ItajobsLogo } from "@/components/brand/ItajobsLogo";
+import { IconInputField } from "@/components/form/IconInputField";
+import { SubmitButton } from "@/components/form/SubmitButton";
+import { FormErrorAlert } from "@/components/form/FormErrorAlert";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { FieldSeparator } from "@/components/ui/field";
-import { accountTypes, type AccountType } from "@/features/auth/AccountTypes";
-
-import { AccountTypeToggle } from "./AccountTypeToggle";
-import { GoogleSignInButton } from "./GoogleSignInButton";
-import { LoginForm } from "./LoginForm";
+import { accountTypes, type AccountType } from "@/features/auth/accountTypes";
+import { useFormSubmit } from "@/hooks/useFormSubmit";
+import { get } from "@/lib/api";
+import type { Candidato, Empresa } from "@/types/usuario";
+import { cn } from "@/utils/utils";
 
 export function LoginCard() {
+  const router = useRouter();
   const [accountType, setAccountType] = useState<AccountType>("empregado");
   const current = accountTypes.find((type) => type.id === accountType)!;
-
+  const { erro, enviando, onSubmit } = useFormSubmit(async (form) => {
+    const cadastro = await get<Candidato | Empresa>(`/api/${current.tipo}/${Number(form.get("id"))}`);
+    router.push(`/cadastros/${current.tipo}/${cadastro.id}`);
+  });
   return (
-    <Card className="relative mt-16 w-full max-w-120 animate-in gap-6 overflow-visible rounded-3xl border-10 border-white/15 bg-clip-padding pt-0 pb-0 shadow-2xl ring-0 duration-500 fade-in-0 slide-in-from-bottom-4 motion-reduce:animate-none">
-      <ItajobsEmblem
-        priority
-        className="absolute -top-16 left-1/2 w-36 -translate-x-1/2 drop-shadow-[0_12px_18px_rgba(0,0,0,0.45)]"
-      />
-
+    <Card className="relative mt-16 w-full max-w-120 gap-6 overflow-visible rounded-3xl border-10 border-white/15 bg-clip-padding pt-0 pb-0 shadow-2xl ring-0">
+      <ItajobsLogo priority className="absolute -top-16 left-1/2 w-36 -translate-x-1/2 drop-shadow-[0_12px_18px_rgba(0,0,0,0.45)]" />
       <CardHeader className="flex flex-col items-center gap-0 px-7 pt-22 text-center">
-        <h1 aria-label="ItaJobs" className="text-[32px] leading-none">
-          <ItajobsWordmark />
-        </h1>
-        <p className="mt-4 text-[11px] font-medium tracking-[0.3em] text-muted-foreground uppercase">
-          Empregos em Itajaí
-        </p>
-        <CardTitle className="mt-6 text-lg font-semibold text-card-foreground">Entrar na sua conta</CardTitle>
-        <CardDescription className="mt-1">Escolha como você usa o ItaJobs.</CardDescription>
+        <h1 aria-label="ItaJobs" className="text-[32px] leading-none"><ItajobsLogo variant="wordmark" /></h1>
+        <CardTitle className="mt-6 text-lg">Consultar cadastro</CardTitle>
+        <CardDescription className="mt-2">O acesso por ID não autentica sua identidade. O login ainda não está disponível.</CardDescription>
       </CardHeader>
-
-      <CardContent className="flex flex-col gap-6 px-7">
-        <AccountTypeToggle value={accountType} onChange={setAccountType} />
-        <LoginForm redirectTo={current.home} />
-        <FieldSeparator className="*:data-[slot=field-separator-content]:bg-card">ou</FieldSeparator>
-        <GoogleSignInButton href={current.home} />
+      <CardContent className="flex flex-col gap-5 px-7">
+        <div role="radiogroup" aria-label="Tipo de cadastro" className="grid grid-cols-2 gap-1 rounded-xl bg-muted p-1">
+          {accountTypes.map(({ id, label, icon: Icon }) => <button key={id} type="button" role="radio" aria-checked={id === accountType} onClick={() => setAccountType(id)} className={cn("flex h-10 items-center justify-center gap-2 rounded-lg text-sm font-medium", id === accountType && "bg-primary text-white")}><Icon className="size-4" />{label}</button>)}
+        </div>
+        <form onSubmit={onSubmit} className="space-y-4">
+          <IconInputField id="id" label={`ID do ${current.tipo}`} icon={LuHash} type="number" min={1} required />
+          <FormErrorAlert message={erro} />
+          <SubmitButton pending={enviando} pendingLabel="Consultando..." className="w-full">Consultar</SubmitButton>
+        </form>
+        <Link href="/cadastros" className="text-center text-sm text-primary underline">Ver cadastros disponíveis</Link>
       </CardContent>
-
-      <CardFooter className="justify-center gap-1.5 rounded-b-xl px-7 py-5 text-sm text-muted-foreground">
-        Ainda não tem conta?
-        <Link
-          href={current.signup}
-          className="inline-flex items-center gap-1 font-semibold text-primary underline decoration-secondary decoration-2 underline-offset-4 transition-colors hover:decoration-primary"
-        >
-          <LuUserPlus className="size-4" />
-          Criar conta
-        </Link>
-      </CardFooter>
+      <CardFooter className="justify-center gap-2 py-5 text-sm text-muted-foreground">Ainda não tem cadastro?<Link href={current.signup} className="font-semibold text-primary underline">Cadastrar</Link></CardFooter>
     </Card>
   );
 }

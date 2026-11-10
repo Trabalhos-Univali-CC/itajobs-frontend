@@ -9,12 +9,13 @@ import {
   InputGroupButton,
   InputGroupInput,
 } from "@/components/ui/input-group"
-import { cn } from "@/lib/Utils"
+import { cn } from "@/utils/utils"
 
 function PasswordInput({
   className,
+  addonEnd,
   ...props
-}: Omit<React.ComponentProps<"input">, "type">) {
+}: Omit<React.ComponentProps<"input">, "type"> & { addonEnd?: React.ReactNode }) {
   const [visible, setVisible] = React.useState(false)
   const Icon = visible ? LuEyeOff : LuEye
 
@@ -36,6 +37,7 @@ function PasswordInput({
             className="animate-in duration-200 zoom-in-50 motion-reduce:animate-none"
           />
         </InputGroupButton>
+        {addonEnd}
       </InputGroupAddon>
     </InputGroup>
   )

@@ -1,36 +1,50 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# ItaJobs frontend
 
-## Getting Started
+Next.js 16, React 19, TypeScript, Tailwind CSS 4 e shadcn/Base UI.
 
-First, run the development server:
+## Executar
 
-```bash
+```powershell
+npm ci
+Copy-Item .env.example .env.local
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+O frontend abre em `http://localhost:3000`. Defina `API_URL` em `.env.local` com o endereço do backend, sem `/api` no final. O padrão é `http://localhost:5176`. Reinicie o Next após alterar essa configuração.
 
-You can start editing the page by modifying `src/app/page.tsx`. The page auto-updates as you edit the file.
+As requisições do navegador usam `/api/...`. O Next encaminha essas chamadas para a API real por `rewrites`, evitando depender de CORS no backend. Não existem banco em memória, dados de demonstração, sessão simulada ou rotas locais de API.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Funcionalidades
 
-## Learn More
+- `/`: consultar vagas, filtrando por cargo e empresa.
+- `/vagas/[id]`: consultar uma vaga e registrar uma candidatura.
+- `/cadastro/candidato` e `/cadastro/empresa`: cadastrar os respectivos registros.
+- `/cadastros`: listar candidatos e empresas.
+- `/cadastros/[tipo]/[id]`: consultar, atualizar e excluir um cadastro; atualizar a nota da empresa.
+- `/curriculo`: consultar por ID do candidato ou do currículo, criar e excluir currículo, cadastrar/remover habilidades e cadastrar/editar/remover experiências.
+- `/candidaturas`: consultar e cancelar candidaturas de um candidato.
+- `/painel/vagas`: consultar as vagas de uma empresa.
+- `/painel/vagas/nova`: publicar vaga.
+- `/painel/vagas/[id]`: editar/excluir vaga e consultar seus candidatos.
+- `/painel/candidatos/[id]`: consultar o currículo de um candidato.
+- `/login`: consultar um cadastro real por ID, sem autenticação.
 
-To learn more about Next.js, take a look at the following resources:
+Cada operação envia a requisição correspondente. A interface só altera os registros após a resposta da API. Não há sincronização em lote nem repetição automática de requisições.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Contrato do backend
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+Integração baseada no commit `5d7bcc0a61f44c81d63be14ba5018c13930a6849` de [itajobs-backend](https://github.com/Trabalhos-Univali-CC/itajobs-backend).
 
-## Deploy on Vercel
+A API ainda não oferece login, senha, sessão ou autorização. Por isso, cadastro não pede senha e consulta por ID não é apresentada como login autenticado.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+O currículo suporta apenas identificação do candidato, habilidades e experiências. Foto, portfólio, resumo, descrição da experiência, projetos, formações e idiomas não são enviados nem apresentados como salvos.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+O backend deve estar executando com um PostgreSQL configurado e com as tabelas do modelo atual. A migration inicial versionada nesse commit cria apenas a tabela `exemplo`; sozinha, ela não prepara as tabelas de candidatos, empresas, vagas, currículos e candidaturas. A estrutura precisa ser provisionada no projeto do backend antes do uso.
+
+## Verificação
+
+```powershell
+npm run lint
+npx tsc --noEmit
+npm run build
+```
