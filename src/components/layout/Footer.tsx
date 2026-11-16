@@ -9,7 +9,6 @@ const colunas = [
     links: [
       { href: "/", label: "Buscar vagas" },
       { href: "/curriculo", label: "Meu currículo" },
-      { href: "/candidaturas", label: "Minhas candidaturas" },
       { href: "/cadastro/candidato", label: "Criar conta de candidato" },
     ],
   },
@@ -30,7 +29,7 @@ const colunas = [
   },
 ];
 
-export function SiteFooter() {
+export function Footer() {
   return (
     <footer className="relative bg-primary text-white/75">
       <div className="mx-auto grid max-w-6xl gap-10 px-6 pt-14 pb-10 sm:grid-cols-2 lg:grid-cols-[1.4fr_1fr_1fr_1fr]">

@@ -1,50 +1,61 @@
-# ItaJobs frontend
+# ItaJobs
 
-Next.js 16, React 19, TypeScript, Tailwind CSS 4 e shadcn/Base UI.
+O ItaJobs é uma plataforma de empregos voltada a Itajaí, em Santa Catarina. Seu objetivo é aproximar candidatos e empresas da região, facilitando a busca por trabalho e a divulgação de oportunidades.
 
-## Executar
+Os candidatos podem pesquisar vagas, criar um currículo com suas competências, experiências e formação, enviar candidaturas e acompanhar suas inscrições. Também podem conhecer as empresas e consultar suas avaliações.
 
-```powershell
-npm ci
-Copy-Item .env.example .env.local
-npm run dev
+As empresas possuem uma área própria para publicar e gerenciar vagas, pesquisar candidatos com currículo cadastrado e consultar as informações dos profissionais interessados nas oportunidades.
+
+Este repositório contém o frontend do ItaJobs, desenvolvido como projeto acadêmico da disciplina de Engenharia de Software II da Universidade do Vale do Itajaí (UNIVALI).
+
+## Tecnologias utilizadas
+
+- **Next.js 16:** estrutura da aplicação, navegação entre páginas e integração com a API.
+- **React 19:** construção dos componentes e das interfaces interativas.
+- **TypeScript 5:** tipagem dos dados e do código da aplicação.
+- **Tailwind CSS 4:** estilização e adaptação das telas para diferentes dispositivos.
+- **shadcn/ui e Base UI:** componentes de interface, como botões, selects, menus e modais.
+- **Three.js:** cena animada em 3D utilizada na tela de login.
+- **React Icons e Lucide React:** ícones utilizados nas páginas e nos componentes.
+- **ESLint 9:** análise do código e verificação de padrões.
+
+## Como rodar o projeto
+
+É necessário ter o Node.js 20.9 ou superior e o npm instalados. Para utilizar login, cadastros e as demais funcionalidades, o backend também precisa estar em execução e com o banco de dados configurado.
+
+1. Na pasta do projeto, instale as dependências:
+
+   ```bash
+   npm ci
+   ```
+
+2. Copie o arquivo `.env.example` para `.env.local`, na raiz do projeto. Configure o endereço do backend:
+
+   ```env
+   API_URL=http://localhost:5176
+   ```
+
+   A conexão usa exclusivamente a variável `API_URL`. Substitua o endereço de exemplo pelo utilizado na sua API, sem acrescentar `/api` ao final. Reinicie o frontend caso altere essa configuração.
+
+3. Inicie o servidor de desenvolvimento:
+
+   ```bash
+   npm run dev
+   ```
+
+4. Acesse [http://localhost:3000](http://localhost:3000) no navegador.
+
+## Outros comandos
+
+Para verificar o código com o ESLint:
+
+```bash
+npm run lint
 ```
 
-O frontend abre em `http://localhost:3000`. Defina `API_URL` em `.env.local` com o endereço do backend, sem `/api` no final. O padrão é `http://localhost:5176`. Reinicie o Next após alterar essa configuração.
+Para gerar e executar a versão de produção:
 
-As requisições do navegador usam `/api/...`. O Next encaminha essas chamadas para a API real por `rewrites`, evitando depender de CORS no backend. Não existem banco em memória, dados de demonstração, sessão simulada ou rotas locais de API.
-
-## Funcionalidades
-
-- `/`: consultar vagas, filtrando por cargo e empresa.
-- `/vagas/[id]`: consultar uma vaga e registrar uma candidatura.
-- `/cadastro/candidato` e `/cadastro/empresa`: cadastrar os respectivos registros.
-- `/cadastros`: listar candidatos e empresas.
-- `/cadastros/[tipo]/[id]`: consultar, atualizar e excluir um cadastro; atualizar a nota da empresa.
-- `/curriculo`: consultar por ID do candidato ou do currículo, criar e excluir currículo, cadastrar/remover habilidades e cadastrar/editar/remover experiências.
-- `/candidaturas`: consultar e cancelar candidaturas de um candidato.
-- `/painel/vagas`: consultar as vagas de uma empresa.
-- `/painel/vagas/nova`: publicar vaga.
-- `/painel/vagas/[id]`: editar/excluir vaga e consultar seus candidatos.
-- `/painel/candidatos/[id]`: consultar o currículo de um candidato.
-- `/login`: consultar um cadastro real por ID, sem autenticação.
-
-Cada operação envia a requisição correspondente. A interface só altera os registros após a resposta da API. Não há sincronização em lote nem repetição automática de requisições.
-
-## Contrato do backend
-
-Integração baseada no commit `5d7bcc0a61f44c81d63be14ba5018c13930a6849` de [itajobs-backend](https://github.com/Trabalhos-Univali-CC/itajobs-backend).
-
-A API ainda não oferece login, senha, sessão ou autorização. Por isso, cadastro não pede senha e consulta por ID não é apresentada como login autenticado.
-
-O currículo suporta apenas identificação do candidato, habilidades e experiências. Foto, portfólio, resumo, descrição da experiência, projetos, formações e idiomas não são enviados nem apresentados como salvos.
-
-O backend deve estar executando com um PostgreSQL configurado e com as tabelas do modelo atual. A migration inicial versionada nesse commit cria apenas a tabela `exemplo`; sozinha, ela não prepara as tabelas de candidatos, empresas, vagas, currículos e candidaturas. A estrutura precisa ser provisionada no projeto do backend antes do uso.
-
-## Verificação
-
-```powershell
-npm run lint
-npx tsc --noEmit
+```bash
 npm run build
+npm start
 ```

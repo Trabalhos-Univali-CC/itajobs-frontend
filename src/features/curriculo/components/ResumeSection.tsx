@@ -23,8 +23,7 @@ export function ResumeSection({ parte, titulo, descricao, icon: Icon, opcional, 
           <Icon className="size-5" />
         </span>
         <div className="min-w-0 flex-1">
-          <p className="text-[11px] font-semibold tracking-[0.18em] text-primary/70 uppercase">Parte {parte}</p>
-          <h2 id={tituloId} className="mt-0.5 flex flex-wrap items-center gap-2 text-lg font-semibold text-card-foreground">
+          <h2 id={tituloId} className="flex flex-wrap items-center gap-2 text-lg leading-snug font-semibold text-card-foreground">
             {titulo}
             {opcional && (
               <Badge variant="outline" className="font-normal text-muted-foreground">
@@ -32,7 +31,7 @@ export function ResumeSection({ parte, titulo, descricao, icon: Icon, opcional, 
               </Badge>
             )}
           </h2>
-          <p className="mt-1 text-sm text-muted-foreground">{descricao}</p>
+          <p className="mt-0.5 text-sm text-muted-foreground">{descricao}</p>
         </div>
       </header>
       <div className="mt-6">{children}</div>

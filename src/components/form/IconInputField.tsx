@@ -17,7 +17,7 @@ export function IconInputField({ id, label, icon: Icon, description, addonEnd, c
   return (
     <Field className={className}>
       <FieldLabel htmlFor={id}>{label}</FieldLabel>
-      <InputGroup className={cn("h-10", props.readOnly && "bg-muted/60 hover:border-input")}>
+      <InputGroup className={cn("h-11", props.readOnly && "bg-muted/60 hover:border-input")}>
         <InputGroupAddon>
           <Icon />
         </InputGroupAddon>

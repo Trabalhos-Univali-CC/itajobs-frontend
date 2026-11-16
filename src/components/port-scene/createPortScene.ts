@@ -36,229 +36,269 @@ const wrap = (value: number, min: number, max: number) => {
   return ((((value - min) % range) + range) % range) + min;
 };
 
-export function createPortScene(canvas: HTMLCanvasElement, { animate }: { animate: boolean }) {
+export function createPortScene(canvas: HTMLCanvasElement, { animate, onReady, onError }: { animate: boolean; onReady?: () => void; onError?: (error: unknown) => void }) {
   const random = createRandom(11);
   const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, powerPreference: "high-performance" });
-  const pixelRatio = Math.min(window.devicePixelRatio, 1.25);
+  const pixelRatio = Math.min(window.devicePixelRatio, 1);
   renderer.setPixelRatio(pixelRatio);
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
   renderer.toneMappingExposure = 0.44;
   renderer.shadowMap.enabled = true;
-  renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-
-  const scene = new THREE.Scene();
-  const camera = new THREE.PerspectiveCamera(36, 1, 1, 20000);
-  const target = new THREE.Vector3(0, 0, 4);
-
-  const sunDirection = new THREE.Vector3().setFromSphericalCoords(
-    1,
-    THREE.MathUtils.degToRad(84),
-    THREE.MathUtils.degToRad(235),
-  );
-
-  const sky = new Sky();
-  sky.scale.setScalar(10000);
-  const skyUniforms = sky.material.uniforms;
-  skyUniforms.turbidity.value = 4;
-  skyUniforms.rayleigh.value = 1.6;
-  skyUniforms.mieCoefficient.value = 0.0022;
-  skyUniforms.mieDirectionalG.value = 0.76;
-  skyUniforms.sunPosition.value.copy(sunDirection);
-
-  const pmrem = new THREE.PMREMGenerator(renderer);
-  const environmentScene = new THREE.Scene();
-  environmentScene.add(sky);
-  const environment = pmrem.fromScene(environmentScene);
-  scene.add(sky);
-  scene.environment = environment.texture;
-
-  const sun = new THREE.DirectionalLight("#ffd6a0", 1.8);
-  sun.position.set(-260, 210, -150);
-  sun.target.position.set(0, 0, -10);
-  sun.castShadow = true;
-  sun.shadow.mapSize.set(2048, 2048);
-  Object.assign(sun.shadow.camera, { left: -280, right: 280, top: 220, bottom: -220, near: 10, far: 900 });
-  sun.shadow.camera.updateProjectionMatrix();
-  sun.shadow.bias = -0.0004;
-  sun.shadow.normalBias = 0.6;
-  scene.add(sun, sun.target);
-  scene.add(new THREE.HemisphereLight("#9fb2ff", "#241b3a", 0.6));
-
-  const waterNormals = new THREE.TextureLoader().load("/textures/waternormals.jpg", (texture) => {
-    texture.wrapS = THREE.RepeatWrapping;
-    texture.wrapT = THREE.RepeatWrapping;
-    if (!animate) render(0);
-  });
-  const water = new Water(new THREE.PlaneGeometry(6000, 6000), {
-    textureWidth: 512,
-    textureHeight: 512,
-    waterNormals,
-    sunDirection: sunDirection.clone(),
-    sunColor: 0x9c8466,
-    waterColor: 0x101a4a,
-    distortionScale: 2.4,
-  });
-  water.rotation.x = -Math.PI / 2;
-  water.material.uniforms.size.value = 1.6;
-  scene.add(water);
-
-  const concrete = standard(palette.concrete, 0.9);
-  scene.add(box(1600, 3, 46, concrete, 0, 1.5, -33));
-  scene.add(box(1600, 3.4, 1.2, standard("#2e2c38", 0.9), 0, 1.3, -10.2));
-  scene.add(box(1600, 3, 1600, standard("#1f1c2a", 0.95), 0, 1.5, -856));
-  scene.add(box(1600, 0.25, 0.8, standard(palette.yellow, 0.5), 0, 3.05, -11.2));
-  scene.add(box(1600, 0.06, 10, standard(palette.asphalt, 0.95), 0, 3.03, -19));
-
-  const dashes = new THREE.InstancedMesh(new THREE.BoxGeometry(3, 0.08, 0.25), standard(palette.white, 0.6), 86);
-  const fenders = new THREE.InstancedMesh(new THREE.BoxGeometry(1.4, 2.4, 0.9), standard("#111018", 0.9), 52);
-  const bollards = new THREE.InstancedMesh(new THREE.CylinderGeometry(0.4, 0.5, 0.9, 10), standard("#2b2a33", 0.6, 0.4), 35);
-  const poles = new THREE.InstancedMesh(new THREE.BoxGeometry(0.35, 13, 0.35), standard(palette.steel, 0.5, 0.5), 18);
-  const lamps = new THREE.InstancedMesh(new THREE.BoxGeometry(2.2, 0.35, 1), glow("#ffe2a8", 4), 18);
-  const matrix = new THREE.Matrix4();
-  for (let i = 0; i < 86; i++) dashes.setMatrixAt(i, matrix.makeTranslation(-258 + i * 6, 3.07, -19));
-  for (let i = 0; i < 52; i++) fenders.setMatrixAt(i, matrix.makeTranslation(-255 + i * 10, 1.4, -9.4));
-  for (let i = 0; i < 35; i++) bollards.setMatrixAt(i, matrix.makeTranslation(-255 + i * 15, 3.45, -11.9));
-  for (let i = 0; i < 18; i++) {
-    const x = -255 + i * 30;
-    poles.setMatrixAt(i, matrix.makeTranslation(x, 9.5, -28));
-    lamps.setMatrixAt(i, matrix.makeTranslation(x, 16, -27.4));
-  }
-  lamps.userData.noShadow = true;
-  scene.add(dashes, fenders, bollards, poles, lamps);
-
-  scene.add(createContainerYard(random, -340, 340, [-31, -33.6, -36.2, -38.8, -44, -46.6, -49.2, -51.8], 3));
-  scene.add(createCity(random, 3));
-
-  const cranes = [-75, -25, 25, 75].map((x, index) => {
-    const crane = createCrane();
-    crane.group.position.set(x, 3, -18);
-    scene.add(crane.group);
-    return { ...crane, phase: index * 1.9 };
-  });
-
-  const dockedShip = createCargoShip(random, palette.blue, 150, false);
-  dockedShip.position.set(0, -2, 2.4);
-  scene.add(dockedShip);
-
-  const movers: Mover[] = [];
-  const addMover = (object: THREE.Object3D, start: number, speed: number, range: number, bob = 0) => {
-    scene.add(object);
-    movers.push({ object, start, speed, min: -range, max: range, bob, baseY: object.position.y });
+  renderer.shadowMap.type = THREE.PCFShadowMap;
+  renderer.debug.onShaderError = (gl, program, vertexShader, fragmentShader) => {
+    throw new Error(`Falha ao compilar o porto 3D: ${gl.getProgramInfoLog(program)}\n${gl.getShaderInfoLog(vertexShader)}\n${gl.getShaderInfoLog(fragmentShader)}`);
   };
 
-  [
-    { color: palette.purple, length: 90, start: -60 },
-    { color: palette.silver, length: 74, start: 280 },
-  ].forEach(({ color, length, start }, index) => {
-    const ship = createCargoShip(random, color, length, true);
-    ship.position.z = 42;
-    addMover(ship, start, 4, 360, 1 + index);
-  });
+  let disposed = false;
+  let ready = false;
+  let frame = 0;
+  let lastFrame = 0;
+  let cleanup = (releaseContext = true) => {
+    disposed = true;
+    renderer.resetState();
+    renderer.dispose();
+    if (releaseContext) renderer.forceContextLoss();
+  };
 
-  const tug = createTugboat();
-  tug.position.z = 56;
-  addMover(tug, 10, 4, 360, 3);
+  try {
+    if (!renderer.extensions.has("EXT_color_buffer_float") && !renderer.extensions.has("EXT_color_buffer_half_float")) {
+      throw new Error("A placa de vídeo não suporta os reflexos e efeitos do porto 3D.");
+    }
 
-  [
-    { color: palette.red, length: 82, start: 110 },
-    { color: "#1f4f8a", length: 70, start: -240 },
-  ].forEach(({ color, length, start }, index) => {
-    const ship = createCargoShip(random, color, length, true);
-    ship.rotation.y = Math.PI;
-    ship.position.z = 76;
-    addMover(ship, start, -3.2, 360, 4 + index);
-  });
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(36, 1, 1, 20000);
+    const target = new THREE.Vector3(0, 0, 4);
 
-  const truckColors = [
-    [palette.yellow, palette.blue],
-    [palette.white, palette.red],
-    [palette.blue, palette.yellow],
-    [palette.red, palette.silver],
-    [palette.silver, "#2f7d4f"],
-    [palette.white, palette.blue],
-  ];
-  truckColors.forEach(([cab, cargo], index) => {
-    const truck = createTruck(cab, cargo);
-    const forward = index % 2 === 0;
-    truck.position.set(0, 3, forward ? -21.5 : -16.5);
-    if (!forward) truck.rotation.y = Math.PI;
-    addMover(truck, -240 + index * 80, forward ? 10 : -9, 260);
-  });
+    const sunDirection = new THREE.Vector3().setFromSphericalCoords(
+      1,
+      THREE.MathUtils.degToRad(84),
+      THREE.MathUtils.degToRad(235),
+    );
 
-  scene.traverse((object) => {
-    if (!(object instanceof THREE.Mesh) || object === water || object === sky || object.userData.noShadow) return;
-    object.castShadow = true;
-    object.receiveShadow = true;
-  });
+    const sky = new Sky();
+    sky.scale.setScalar(10000);
+    const skyUniforms = sky.material.uniforms;
+    skyUniforms.turbidity.value = 4;
+    skyUniforms.rayleigh.value = 1.6;
+    skyUniforms.mieCoefficient.value = 0.0022;
+    skyUniforms.mieDirectionalG.value = 0.76;
+    skyUniforms.sunPosition.value.copy(sunDirection);
 
-  const composer = new EffectComposer(renderer);
-  composer.setPixelRatio(pixelRatio);
-  composer.addPass(new RenderPass(scene, camera));
-  const bloom = new UnrealBloomPass(new THREE.Vector2(256, 256), 0.26, 0.4, 0.95);
-  composer.addPass(bloom);
-  composer.addPass(new OutputPass());
+    const pmrem = new THREE.PMREMGenerator(renderer);
+    const environmentScene = new THREE.Scene();
+    environmentScene.add(sky);
+    const environment = pmrem.fromScene(environmentScene, 0, 0.1, 100, { size: 128 });
+    scene.add(sky);
+    scene.environment = environment.texture;
 
-  const update = (time: number) => {
-    water.material.uniforms.time.value = time * 0.6;
+    const sun = new THREE.DirectionalLight("#ffd6a0", 1.8);
+    sun.position.set(-260, 210, -150);
+    sun.target.position.set(0, 0, -10);
+    sun.castShadow = true;
+    sun.shadow.mapSize.set(1024, 1024);
+    Object.assign(sun.shadow.camera, { left: -280, right: 280, top: 220, bottom: -220, near: 10, far: 900 });
+    sun.shadow.camera.updateProjectionMatrix();
+    sun.shadow.bias = -0.0004;
+    sun.shadow.normalBias = 0.6;
+    scene.add(sun, sun.target);
+    scene.add(new THREE.HemisphereLight("#9fb2ff", "#241b3a", 0.6));
 
-    for (const mover of movers) {
-      mover.object.position.x = wrap(mover.start + mover.speed * time, mover.min, mover.max);
-      if (mover.bob) {
-        mover.object.position.y = mover.baseY + Math.sin(time * 0.9 + mover.bob) * 0.18;
-        mover.object.rotation.x = Math.sin(time * 0.7 + mover.bob) * 0.012;
+    const waterNormals = new THREE.TextureLoader().load("/textures/waternormals.jpg", (texture) => {
+      texture.wrapS = THREE.RepeatWrapping;
+      texture.wrapT = THREE.RepeatWrapping;
+      if (!animate && !disposed) render(0);
+    });
+    const water = new Water(new THREE.PlaneGeometry(6000, 6000), {
+      textureWidth: 256,
+      textureHeight: 256,
+      waterNormals,
+      sunDirection: sunDirection.clone(),
+      sunColor: 0x9c8466,
+      waterColor: 0x101a4a,
+      distortionScale: 2.4,
+    });
+    water.rotation.x = -Math.PI / 2;
+    water.material.uniforms.size.value = 1.6;
+    scene.add(water);
+
+    const concrete = standard(palette.concrete, 0.9);
+    scene.add(box(1600, 3, 46, concrete, 0, 1.5, -33));
+    scene.add(box(1600, 3.4, 1.2, standard("#2e2c38", 0.9), 0, 1.3, -10.2));
+    scene.add(box(1600, 3, 1600, standard("#1f1c2a", 0.95), 0, 1.5, -856));
+    scene.add(box(1600, 0.25, 0.8, standard(palette.yellow, 0.5), 0, 3.05, -11.2));
+    scene.add(box(1600, 0.06, 10, standard(palette.asphalt, 0.95), 0, 3.03, -19));
+
+    const dashes = new THREE.InstancedMesh(new THREE.BoxGeometry(3, 0.08, 0.25), standard(palette.white, 0.6), 86);
+    const fenders = new THREE.InstancedMesh(new THREE.BoxGeometry(1.4, 2.4, 0.9), standard("#111018", 0.9), 52);
+    const bollards = new THREE.InstancedMesh(new THREE.CylinderGeometry(0.4, 0.5, 0.9, 10), standard("#2b2a33", 0.6, 0.4), 35);
+    const poles = new THREE.InstancedMesh(new THREE.BoxGeometry(0.35, 13, 0.35), standard(palette.steel, 0.5, 0.5), 18);
+    const lamps = new THREE.InstancedMesh(new THREE.BoxGeometry(2.2, 0.35, 1), glow("#ffe2a8", 4), 18);
+    const matrix = new THREE.Matrix4();
+    for (let i = 0; i < 86; i++) dashes.setMatrixAt(i, matrix.makeTranslation(-258 + i * 6, 3.07, -19));
+    for (let i = 0; i < 52; i++) fenders.setMatrixAt(i, matrix.makeTranslation(-255 + i * 10, 1.4, -9.4));
+    for (let i = 0; i < 35; i++) bollards.setMatrixAt(i, matrix.makeTranslation(-255 + i * 15, 3.45, -11.9));
+    for (let i = 0; i < 18; i++) {
+      const x = -255 + i * 30;
+      poles.setMatrixAt(i, matrix.makeTranslation(x, 9.5, -28));
+      lamps.setMatrixAt(i, matrix.makeTranslation(x, 16, -27.4));
+    }
+    lamps.userData.noShadow = true;
+    scene.add(dashes, fenders, bollards, poles, lamps);
+
+    scene.add(createContainerYard(random, -340, 340, [-31, -33.6, -36.2, -38.8, -44, -46.6, -49.2, -51.8], 3));
+    scene.add(createCity(random, 3));
+
+    const cranes = [-75, -25, 25, 75].map((x, index) => {
+      const crane = createCrane();
+      crane.group.position.set(x, 3, -18);
+      scene.add(crane.group);
+      return { ...crane, phase: index * 1.9 };
+    });
+
+    const dockedShip = createCargoShip(random, palette.blue, 150, false);
+    dockedShip.position.set(0, -2, 2.4);
+    scene.add(dockedShip);
+
+    const movers: Mover[] = [];
+    const addMover = (object: THREE.Object3D, start: number, speed: number, range: number, bob = 0) => {
+      scene.add(object);
+      movers.push({ object, start, speed, min: -range, max: range, bob, baseY: object.position.y });
+    };
+
+    [
+      { color: palette.purple, length: 90, start: -60 },
+      { color: palette.silver, length: 74, start: 280 },
+    ].forEach(({ color, length, start }, index) => {
+      const ship = createCargoShip(random, color, length, true);
+      ship.position.z = 42;
+      addMover(ship, start, 4, 360, 1 + index);
+    });
+
+    const tug = createTugboat();
+    tug.position.z = 56;
+    addMover(tug, 10, 4, 360, 3);
+
+    [
+      { color: palette.red, length: 82, start: 110 },
+      { color: "#1f4f8a", length: 70, start: -240 },
+    ].forEach(({ color, length, start }, index) => {
+      const ship = createCargoShip(random, color, length, true);
+      ship.rotation.y = Math.PI;
+      ship.position.z = 76;
+      addMover(ship, start, -3.2, 360, 4 + index);
+    });
+
+    const truckColors = [
+      [palette.yellow, palette.blue],
+      [palette.white, palette.red],
+      [palette.blue, palette.yellow],
+      [palette.red, palette.silver],
+      [palette.silver, "#2f7d4f"],
+      [palette.white, palette.blue],
+    ];
+    truckColors.forEach(([cab, cargo], index) => {
+      const truck = createTruck(cab, cargo);
+      const forward = index % 2 === 0;
+      truck.position.set(0, 3, forward ? -21.5 : -16.5);
+      if (!forward) truck.rotation.y = Math.PI;
+      addMover(truck, -240 + index * 80, forward ? 10 : -9, 260);
+    });
+
+    scene.traverse((object) => {
+      if (!(object instanceof THREE.Mesh) || object === water || object === sky || object.userData.noShadow) return;
+      object.castShadow = true;
+      object.receiveShadow = true;
+    });
+
+    const composer = new EffectComposer(renderer);
+    composer.setPixelRatio(pixelRatio);
+    composer.addPass(new RenderPass(scene, camera));
+    const bloom = new UnrealBloomPass(new THREE.Vector2(256, 256), 0.26, 0.4, 0.95);
+    composer.addPass(bloom);
+    composer.addPass(new OutputPass());
+
+    const update = (time: number) => {
+      water.material.uniforms.time.value = time * 0.6;
+
+      for (const mover of movers) {
+        mover.object.position.x = wrap(mover.start + mover.speed * time, mover.min, mover.max);
+        if (mover.bob) {
+          mover.object.position.y = mover.baseY + Math.sin(time * 0.9 + mover.bob) * 0.18;
+          mover.object.rotation.x = Math.sin(time * 0.7 + mover.bob) * 0.012;
+        }
+      }
+      dockedShip.rotation.x = Math.sin(time * 0.5) * 0.004;
+
+      for (const crane of cranes) {
+        const z = 11 + Math.sin(time * 0.3 + crane.phase) * 16;
+        const spreaderY = 9 + (1 + Math.sin(time * 0.6 + crane.phase)) * 4.5;
+        crane.trolley.position.z = z;
+        crane.spreader.position.set(0, spreaderY, z);
+        const cableLength = 19 - spreaderY;
+        crane.cable.scale.y = cableLength;
+        crane.cable.position.set(0, spreaderY + cableLength / 2, z);
+        const material = crane.beacon.material as THREE.MeshStandardMaterial;
+        material.emissiveIntensity = Math.sin(time * 2.4 + crane.phase) > 0.55 ? 8 : 0.4;
+      }
+
+      camera.position.set(70 + Math.sin(time * 0.035) * 18, 92 + Math.sin(time * 0.025) * 4, 215);
+      camera.lookAt(target);
+    };
+
+    function render(time: number) {
+      if (disposed) return;
+      update(time);
+      composer.render();
+      if (!ready) {
+        ready = true;
+        onReady?.();
       }
     }
-    dockedShip.rotation.x = Math.sin(time * 0.5) * 0.004;
 
-    for (const crane of cranes) {
-      const z = 11 + Math.sin(time * 0.3 + crane.phase) * 16;
-      const spreaderY = 9 + (1 + Math.sin(time * 0.6 + crane.phase)) * 4.5;
-      crane.trolley.position.z = z;
-      crane.spreader.position.set(0, spreaderY, z);
-      const cableLength = 19 - spreaderY;
-      crane.cable.scale.y = cableLength;
-      crane.cable.position.set(0, spreaderY + cableLength / 2, z);
-      const material = crane.beacon.material as THREE.MeshStandardMaterial;
-      material.emissiveIntensity = Math.sin(time * 2.4 + crane.phase) > 0.55 ? 8 : 0.4;
-    }
+    const resize = () => {
+      const parent = canvas.parentElement;
+      if (!parent || disposed || !parent.clientWidth || !parent.clientHeight) return;
+      const width = parent.clientWidth;
+      const height = Math.max(parent.clientHeight, 1);
+      renderer.setSize(width, height, false);
+      composer.setSize(width, height);
+      camera.aspect = width / height;
+      camera.updateProjectionMatrix();
+      render(timer.getElapsed());
+    };
 
-    camera.position.set(70 + Math.sin(time * 0.035) * 18, 92 + Math.sin(time * 0.025) * 4, 215);
-    camera.lookAt(target);
-  };
+    const timer = new THREE.Timer();
+    timer.connect(document);
+    const loop = (timestamp: number) => {
+      if (disposed) return;
+      frame = requestAnimationFrame(loop);
+      if (timestamp - lastFrame < 1000 / 30) return;
+      lastFrame = timestamp;
+      timer.update(timestamp);
+      try {
+        render(timer.getElapsed());
+      } catch (error) {
+        cancelAnimationFrame(frame);
+        onError?.(error);
+      }
+    };
+    const observer = new ResizeObserver(() => {
+      try { resize(); }
+      catch (error) { cancelAnimationFrame(frame); onError?.(error); }
+    });
+    const handleContextLost = (event: Event) => {
+      event.preventDefault();
+      cleanup(false);
+      onError?.(new Error("O navegador perdeu o contexto gráfico do porto 3D."));
+    };
 
-  function render(time: number) {
-    update(time);
-    composer.render();
-  }
-
-  const resize = () => {
-    const parent = canvas.parentElement;
-    if (!parent) return;
-    const width = parent.clientWidth;
-    const height = Math.max(parent.clientHeight, 1);
-    renderer.setSize(width, height, false);
-    composer.setSize(width, height);
-    camera.aspect = width / height;
-    camera.updateProjectionMatrix();
-    if (!animate) render(0);
-  };
-
-  const observer = new ResizeObserver(resize);
-  if (canvas.parentElement) observer.observe(canvas.parentElement);
-  resize();
-
-  const clock = new THREE.Clock();
-  let frame = 0;
-  const loop = () => {
-    render(clock.getElapsedTime());
-    frame = requestAnimationFrame(loop);
-  };
-  if (animate) loop();
-
-  return {
-    dispose() {
+    cleanup = (releaseContext = true) => {
+      if (disposed) return;
+      disposed = true;
       cancelAnimationFrame(frame);
       observer.disconnect();
+      timer.dispose();
+      canvas.removeEventListener("webglcontextlost", handleContextLost);
       scene.traverse((object) => {
         if (!(object instanceof THREE.Mesh)) return;
         object.geometry.dispose();
@@ -273,9 +313,21 @@ export function createPortScene(canvas: HTMLCanvasElement, { animate }: { animat
       waterNormals.dispose();
       environment.dispose();
       pmrem.dispose();
+      for (const pass of composer.passes) pass.dispose();
       composer.dispose();
       resetSharedTextures();
+      renderer.resetState();
       renderer.dispose();
-    },
-  };
+      if (releaseContext) renderer.forceContextLoss();
+    };
+    canvas.addEventListener("webglcontextlost", handleContextLost);
+    if (canvas.parentElement) observer.observe(canvas.parentElement);
+    resize();
+    if (animate) frame = requestAnimationFrame(loop);
+
+    return { dispose: cleanup };
+  } catch (error) {
+    cleanup();
+    throw error;
+  }
 }

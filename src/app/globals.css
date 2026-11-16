@@ -106,3 +106,27 @@
     @apply font-sans;
   }
 }
+
+input:is(:autofill, :-webkit-autofill) {
+  color: var(--foreground);
+  caret-color: var(--primary);
+  -webkit-text-fill-color: var(--foreground);
+  box-shadow:
+    inset 0 0 0 1000px var(--accent),
+    var(--tw-ring-offset-shadow, 0 0 #0000),
+    var(--tw-ring-shadow, 0 0 #0000),
+    var(--tw-shadow, 0 0 #0000);
+}
+
+:is([data-slot="input-group"], [data-slot="password-input"]):has(input:is(:autofill, :-webkit-autofill)) {
+  background-color: var(--accent);
+}
+
+:is([data-slot="input-group"], [data-slot="password-input"]) > input:is(:autofill, :-webkit-autofill) {
+  height: 100%;
+  border-radius: inherit;
+}
+
+:is([data-slot="input-group"], [data-slot="password-input"]):has(input:is(:autofill, :-webkit-autofill)) [data-slot="input-group-addon"] {
+  color: var(--primary);
+}

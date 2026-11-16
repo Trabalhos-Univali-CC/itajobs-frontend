@@ -48,7 +48,7 @@ export function TermoDeUsoDialog({ onAccept }: { onAccept: () => void }) {
                 <h4 className="text-sm font-medium text-card-foreground">2. Cadastro e conta</h4>
                 <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
                   Você se compromete a informar dados verdadeiros e atualizados e a não cadastrar dados de terceiros sem autorização.
-                  Cada CPF ou CNPJ pode ter apenas um cadastro. O acesso por ID ainda não autentica a identidade do usuário.
+                  Cada CPF ou CNPJ pode ter apenas um cadastro. O acesso à conta exige e-mail e senha.
                 </p>
               </div>
               <div>
@@ -95,8 +95,8 @@ export function TermoDeUsoDialog({ onAccept }: { onAccept: () => void }) {
               <div>
                 <h4 className="text-sm font-medium text-card-foreground">3. Compartilhamento</h4>
                 <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
-                  Na versão atual, cadastros e currículos podem ser consultados sem autenticação. Os dados da empresa aparecem
-                  junto das vagas que ela publicar. Cadastre apenas informações autorizadas para consulta.
+                  A consulta a cadastros e currículos exige autenticação e segue as permissões do tipo de conta.
+                  Os dados da empresa aparecem junto das vagas que ela publicar.
                 </p>
               </div>
               <div>
@@ -109,8 +109,8 @@ export function TermoDeUsoDialog({ onAccept }: { onAccept: () => void }) {
               <div>
                 <h4 className="text-sm font-medium text-card-foreground">5. Segurança</h4>
                 <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
-                  Esta versão ainda não oferece login nem controle de acesso por usuário. A consulta por ID permite acessar
-                  os registros existentes e não substitui autenticação.
+                  O acesso usa e-mail e senha. Mantenha sua senha em sigilo e encerre a sessão ao usar um dispositivo compartilhado.
+                  A alteração da senha exige a senha atual.
                 </p>
               </div>
             </section>

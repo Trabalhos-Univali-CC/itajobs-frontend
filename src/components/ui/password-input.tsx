@@ -20,7 +20,7 @@ function PasswordInput({
   const Icon = visible ? LuEyeOff : LuEye
 
   return (
-    <InputGroup data-slot="password-input" className={cn("h-10", className)}>
+    <InputGroup data-slot="password-input" className={cn("h-11", className)}>
       <InputGroupAddon>
         <LuLock />
       </InputGroupAddon>

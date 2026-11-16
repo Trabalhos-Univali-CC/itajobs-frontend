@@ -1,5 +1,6 @@
 "use client";
 
+import { PageLoading } from "@/components/ui/page-loading";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -30,9 +31,9 @@ export default function VagaEmpresaPage() {
   return (
     <main className="flex-1 bg-background pb-16">
       <PageHero title={vaga?.cargo ?? "Detalhes da vaga"} description={vaga?.nomeEmpresa ?? "Consulte a vaga e os candidatos inscritos."} />
-      <div className="mx-auto flex max-w-5xl flex-col gap-6 px-6">
+      <div className="mx-auto flex max-w-6xl flex-col gap-6 px-4 sm:px-6">
         <FormErrorAlert message={erro} />
-        {!vaga && !erro && <p role="status">Carregando vaga...</p>}
+        {!vaga && !erro && <PageLoading label="Carregando vaga..." />}
         {vaga && <>
           <VagaForm vaga={vaga} onSave={setVaga} />
           <details className="rounded-xl border p-4"><summary className="cursor-pointer text-destructive">Excluir vaga</summary><p className="my-3 text-sm">A exclusão também remove suas candidaturas.</p><Button variant="destructive" disabled={excluindo} onClick={async () => {

@@ -1,22 +1,33 @@
+import Image from "next/image";
+import { niveisFormacao, niveisIdioma } from "@/features/curriculo/opcoes";
 import type { Curriculo } from "@/types/curriculo";
 import type { Candidato } from "@/types/usuario";
-import { formatarTelefone } from "@/utils/utils";
+import { cn, formatarTelefone } from "@/utils/utils";
 
-export function ResumePreview({ candidato, curriculo }: { candidato: Candidato; curriculo: Curriculo }) {
+export function ResumePreview({ candidato, curriculo, resumo = curriculo?.resumo ?? "", portfolio = curriculo?.portfolio ?? "", imagem, variante = "documento" }: { candidato: Candidato; curriculo: Curriculo | null; resumo?: string; portfolio?: string; imagem?: string | null; variante?: "documento" | "perfil" }) {
+  const perfil = variante === "perfil";
+  const foto = curriculo?.arquivos.find((arquivo) => arquivo.tipo === "foto");
+  const experiencias = [...curriculo?.experiencias ?? []].sort((a, b) => b.dataInicio.localeCompare(a.dataInicio));
+  const formacoes = [...curriculo?.formacoes ?? []].sort((a, b) => b.dataInicio.localeCompare(a.dataInicio));
+  const contato = [[candidato.endereco.bairro, candidato.endereco.cidade].filter(Boolean).join(", "), formatarTelefone(candidato.contato.telefone), candidato.contato.email].filter(Boolean);
+  const linkPortfolio = /^https?:\/\//i.test(portfolio.trim()) ? portfolio.trim() : null;
   return (
-    <article aria-label="Pré-visualização do currículo" className="rounded-xl border bg-white p-6 text-sm leading-relaxed shadow-lg shadow-primary/5">
-      <header className="border-b-2 border-primary pb-4">
-        <h3 className="text-lg font-bold text-primary">{curriculo.nomeCandidato}</h3>
-        <p className="mt-1 text-xs text-muted-foreground">{candidato.endereco.bairro} ? {candidato.endereco.cidade}</p>
-        <p className="text-xs text-muted-foreground">{formatarTelefone(candidato.contato.telefone)} ? {candidato.contato.email}</p>
-      </header>
-      <section className="mt-4"><h4 className="mb-2 border-b pb-1 font-semibold text-primary">Competências</h4>
-        {curriculo.habilidades.length ? <p>{curriculo.habilidades.map((habilidade) => habilidade.descricao).join(" ? ")}</p> : <p className="text-muted-foreground">Nenhuma competência cadastrada.</p>}
-      </section>
-      <section className="mt-4"><h4 className="mb-2 border-b pb-1 font-semibold text-primary">Experiências</h4>
-        {curriculo.experiencias.map((experiencia) => <div key={experiencia.id} className="mb-3"><p className="font-medium">{experiencia.cargo}</p><p>{experiencia.nomeEmpresa}</p><p className="text-xs text-muted-foreground">{experiencia.dataInicio} ? {experiencia.dataFim ?? "Atual"}</p></div>)}
-        {curriculo.experiencias.length === 0 && <p className="text-muted-foreground">Nenhuma experiência cadastrada.</p>}
-      </section>
+    <article aria-label={perfil ? "Currículo profissional" : "Pré-visualização do currículo"} className={cn("rounded-xl border bg-white leading-relaxed text-neutral-700", perfil ? "border-primary/10 p-5 text-sm shadow-sm [&>section]:mt-6 [&>section:first-child]:mt-0 [&_h4]:mb-3 [&_h4]:pb-2 [&_h4]:text-xs sm:p-7" : "px-6 py-7 text-[11px] shadow-lg shadow-primary/5")}>
+      {!perfil && <header className="flex items-center gap-4 border-b-2 border-primary pb-4">
+        {(imagem !== undefined ? imagem : foto && curriculo) && <Image src={imagem ?? `/api/curriculo/${curriculo!.id}/arquivos/foto?v=${encodeURIComponent(foto!.enviadoEm)}`} alt="" width={56} height={56} unoptimized className="size-14 shrink-0 rounded-full object-cover" />}
+        <div className="min-w-0"><h3 className="text-base leading-tight font-bold tracking-wide break-words text-primary uppercase">{candidato.nome} {candidato.sobrenome}</h3><p className="mt-1 break-words text-neutral-500">{contato.join(" · ")}</p>{linkPortfolio && <a href={linkPortfolio} target="_blank" rel="noopener noreferrer" className="mt-1 inline-block max-w-full break-all text-primary underline underline-offset-2">{linkPortfolio}</a>}</div>
+      </header>}
+      {perfil && !resumo.trim() && !curriculo?.habilidades.length && experiencias.length === 0 && formacoes.length === 0 && !curriculo?.projetos?.length && !curriculo?.cursos.length && !curriculo?.idiomas?.length && <p className="text-muted-foreground">Este currículo ainda não tem informações profissionais.</p>}
+      {resumo.trim() && <section className="mt-4"><h4 className="mb-1.5 border-b border-neutral-200 pb-1 text-[10px] font-bold tracking-[0.16em] text-primary uppercase">Resumo profissional</h4><p className="break-words whitespace-pre-line">{resumo.trim()}</p></section>}
+      {!!curriculo?.habilidades.length && <section className="mt-4"><h4 className="mb-1.5 border-b border-neutral-200 pb-1 text-[10px] font-bold tracking-[0.16em] text-primary uppercase">Competências</h4><p className="break-words">{curriculo.habilidades.map((habilidade) => habilidade.descricao).join(" · ")}</p></section>}
+      {experiencias.length > 0 && <section className="mt-4"><h4 className="mb-1.5 border-b border-neutral-200 pb-1 text-[10px] font-bold tracking-[0.16em] text-primary uppercase">Experiência profissional</h4><div className="space-y-2.5">{experiencias.map((experiencia) => <div key={experiencia.id}>
+        <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-0.5"><p className="min-w-0 font-semibold break-words text-neutral-900">{experiencia.cargo}{experiencia.nomeEmpresa && <span className="font-normal text-neutral-600"> — {experiencia.nomeEmpresa}</span>}</p><span className="text-neutral-500 tabular-nums">{new Date(`${experiencia.dataInicio}T12:00:00`).toLocaleDateString("pt-BR", { month: "short", year: "numeric" })} — {experiencia.dataFim ? new Date(`${experiencia.dataFim}T12:00:00`).toLocaleDateString("pt-BR", { month: "short", year: "numeric" }) : "Atual"}</span></div>
+        {experiencia.descricao && <p className="mt-1 break-words whitespace-pre-line">{experiencia.descricao}</p>}
+      </div>)}</div></section>}
+      {!!curriculo?.projetos?.length && <section className="mt-4"><h4 className="mb-1.5 border-b border-neutral-200 pb-1 text-[10px] font-bold tracking-[0.16em] text-primary uppercase">Projetos e atividades</h4><div className="space-y-2">{curriculo.projetos.map((projeto) => <div key={projeto.id}><p className="font-semibold break-words text-neutral-900">{projeto.titulo}</p>{projeto.descricao && <p className="mt-1 break-words whitespace-pre-line">{projeto.descricao}</p>}</div>)}</div></section>}
+      {formacoes.length > 0 && <section className="mt-4"><h4 className="mb-1.5 border-b border-neutral-200 pb-1 text-[10px] font-bold tracking-[0.16em] text-primary uppercase">Formação acadêmica</h4><div className="space-y-2">{formacoes.map((formacao) => <div key={formacao.id}><p className="font-semibold break-words text-neutral-900">{formacao.curso || formacao.instituicao}<span className="font-normal text-neutral-600"> — {niveisFormacao[formacao.nivel]}</span></p>{formacao.curso && <p>{formacao.instituicao}</p>}<p className="text-neutral-500">{formacao.dataFim ? `${formacao.dataFim > new Date().toISOString().slice(0, 10) ? "Previsão " : "Conclusão "}${new Date(`${formacao.dataFim}T12:00:00`).toLocaleDateString("pt-BR", { month: "short", year: "numeric" })}` : "Em andamento"}</p></div>)}</div></section>}
+      {!!curriculo?.cursos.length && <section className="mt-4"><h4 className="mb-1.5 border-b border-neutral-200 pb-1 text-[10px] font-bold tracking-[0.16em] text-primary uppercase">Cursos e certificações</h4><div className="space-y-2">{curriculo.cursos.map((curso) => <div key={curso.id}><p className="font-semibold break-words text-neutral-900">{curso.nome}</p><p>{[curso.instituicao, curso.cargaHoraria ? `${curso.cargaHoraria} horas` : null, curso.dataConclusao ? new Date(`${curso.dataConclusao}T12:00:00`).toLocaleDateString("pt-BR", { month: "short", year: "numeric" }) : null].filter(Boolean).join(" · ")}</p></div>)}</div></section>}
+      {!!curriculo?.idiomas?.length && <section className="mt-4"><h4 className="mb-1.5 border-b border-neutral-200 pb-1 text-[10px] font-bold tracking-[0.16em] text-primary uppercase">Idiomas</h4><p className="break-words">{curriculo.idiomas.map((idioma) => `${idioma.idioma} — ${niveisIdioma[idioma.nivel]}`).join(" · ")}</p></section>}
     </article>
   );
 }

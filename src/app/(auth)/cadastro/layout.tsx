@@ -32,7 +32,7 @@ export default function CadastroLayout({ children }: LayoutProps<"/cadastro">) {
             <p className="text-sm text-white/80">
               <span className="hidden sm:inline">Já tenho cadastro?</span>
               <Link href="/login" className="ml-2 font-semibold text-secondary underline-offset-4 hover:underline">
-                Consultar
+                Entrar
               </Link>
             </p>
           </div>
@@ -71,10 +71,10 @@ export default function CadastroLayout({ children }: LayoutProps<"/cadastro">) {
                 href={signup}
                 aria-current={selected ? "page" : undefined}
                 className={cn(
-                  "group flex items-start gap-4 rounded-2xl border bg-card p-5 text-card-foreground transition-all duration-300 outline-none focus-visible:ring-3 focus-visible:ring-ring/40",
+                  "group flex items-start gap-4 rounded-2xl border bg-card p-5 text-card-foreground transition-colors duration-200 outline-none focus-visible:ring-3 focus-visible:ring-ring/40",
                   selected
                     ? "border-primary shadow-lg shadow-primary/10 ring-1 ring-primary"
-                    : "border-border shadow-sm hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-md",
+                    : "border-border shadow-sm hover:border-primary/40 hover:bg-accent/40",
                 )}
               >
                 <span
@@ -83,7 +83,7 @@ export default function CadastroLayout({ children }: LayoutProps<"/cadastro">) {
                     selected ? "bg-primary text-secondary" : "bg-muted text-muted-foreground group-hover:text-primary",
                   )}
                 >
-                  <Icon className="size-6 transition-transform duration-300 group-hover:scale-110" />
+                  <Icon className="size-6" />
                 </span>
                 <span className="flex-1">
                   <span className="block text-lg font-semibold">Sou {label.toLowerCase()}</span>

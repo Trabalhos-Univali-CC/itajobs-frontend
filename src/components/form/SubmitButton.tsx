@@ -17,7 +17,7 @@ export function SubmitButton({ pending, pendingLabel, icon: Icon = LuArrowRight,
       {pending ? (
         <LuLoaderCircle className="animate-spin" />
       ) : (
-        <Icon className="transition-transform duration-200 group-hover/button:translate-x-0.5" />
+        <Icon />
       )}
     </Button>
   );

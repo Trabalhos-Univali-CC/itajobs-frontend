@@ -28,13 +28,15 @@ export function del(path: string) {
 }
 
 async function request<T>(method: string, path: string, body?: unknown): Promise<T> {
+  const multipart = typeof FormData !== "undefined" && body instanceof FormData;
   let response: Response;
   try {
     response = await fetch(path, {
       method,
-      headers: body === undefined ? undefined : { "Content-Type": "application/json" },
-      body: body === undefined ? undefined : JSON.stringify(body),
+      headers: body === undefined || multipart ? undefined : { "Content-Type": "application/json" },
+      body: body === undefined ? undefined : multipart ? body : JSON.stringify(body),
       cache: "no-store",
+      credentials: "same-origin",
     });
   } catch {
     throw new ApiError(0, "Não foi possível conectar ao servidor. Tente novamente.");
@@ -42,6 +44,7 @@ async function request<T>(method: string, path: string, body?: unknown): Promise
 
   const data = await response.json().catch(() => null);
   if (!response.ok) {
+    if (response.status === 401 && path !== "/api/auth/login" && typeof window !== "undefined") window.location.replace("/login");
     throw new ApiError(response.status, response.status >= 500 && !data ? "A API está indisponível. Verifique se o backend está em execução." : mensagemDeErro(data));
   }
   return data as T;
